@@ -2,10 +2,10 @@
 # Stage 1 — Build frontend assets + PHP dependencies
 #           (needs both Node AND PHP — Wayfinder calls php artisan)
 # ============================================================
-FROM php:8.3-cli-alpine AS builder
+FROM php:8.4-cli-alpine AS builder
 
-# Install Node + npm + tools for PHP extensions
-RUN apk add --no-cache nodejs npm libzip-dev libpq-dev \
+# Install Node + runtime libs (keep libpq/libzip — extensions need them at runtime)
+RUN apk add --no-cache nodejs npm libzip libpq libzip-dev libpq-dev \
     && docker-php-ext-install zip pdo pdo_pgsql \
     && apk del libzip-dev libpq-dev
 
@@ -37,9 +37,9 @@ RUN npm run build
 # ============================================================
 # Stage 3 — Final production image
 # ============================================================
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
-# System dependencies
+# System dependencies — keep libpq runtime lib for pdo_pgsql
 RUN apk add --no-cache \
     nginx \
     supervisor \
