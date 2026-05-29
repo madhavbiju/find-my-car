@@ -25,7 +25,9 @@ RUN composer install \
 
 # Copy full app and dump optimised autoloader
 COPY . .
-RUN composer dump-autoload --optimize --no-dev
+RUN mkdir -p bootstrap/cache storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+    && chmod -R 775 bootstrap/cache storage \
+    && composer dump-autoload --optimize --no-dev
 
 # npm dependencies (cached layer)
 COPY package.json package-lock.json ./
