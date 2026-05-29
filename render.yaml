@@ -17,6 +17,10 @@ services:
         sync: false
       - key: DB_CONNECTION
         value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: car-recommender-db
+          property: connectionString
       - key: DB_URL
         fromDatabase:
           name: car-recommender-db

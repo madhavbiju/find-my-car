@@ -1,6 +1,12 @@
 #!/bin/sh
 set -e
 
+# Render exposes the attached Postgres as DATABASE_URL.
+# Laravel reads DB_URL — bridge them if DB_URL isn't already set.
+if [ -z "$DB_URL" ] && [ -n "$DATABASE_URL" ]; then
+    export DB_URL="$DATABASE_URL"
+fi
+
 # Inject the $PORT env var into the nginx config template
 PORT="${PORT:-10000}"
 export PORT
