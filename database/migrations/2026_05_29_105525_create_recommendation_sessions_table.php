@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('recommendation_sessions', function (Blueprint $table) {
             $table->id();
+            $table->jsonb('answers');
+            $table->jsonb('recommended_car_ids')->nullable();
             $table->timestamps();
         });
     }

@@ -2,6 +2,14 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\BodyType;
+use App\Enums\BudgetRange;
+use App\Enums\FamilySize;
+use App\Enums\FuelType;
+use App\Enums\MonthlyKilometers;
+use App\Enums\Transmission;
+use App\Enums\UsageType;
+use App\Enums\UserPriority;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,6 +48,23 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+            ],
+            'lang' => [
+                'recommendations' => array_merge(
+                    trans('recommendations'),
+                    [
+                        'options' => [
+                            'budget' => BudgetRange::toOptions(),
+                            'usage' => UsageType::toOptions(),
+                            'family_size' => FamilySize::toOptions(),
+                            'monthly_km' => MonthlyKilometers::toOptions(),
+                            'fuel_type' => FuelType::toOptions(),
+                            'body_type' => BodyType::toOptions(),
+                            'transmission' => Transmission::toOptions(),
+                            'priority' => UserPriority::toOptions(),
+                        ],
+                    ]
+                ),
             ],
         ];
     }
