@@ -1,27 +1,20 @@
 # ============================================================
-# Stage 1 — Build frontend assets
+# Stage 1 — Build frontend assets + PHP dependencies
+#           (needs both Node AND PHP — Wayfinder calls php artisan)
 # ============================================================
-FROM node:20-alpine AS frontend
+FROM php:8.3-cli-alpine AS builder
+
+# Install Node + npm + tools for PHP extensions
+RUN apk add --no-cache nodejs npm libzip-dev libpq-dev \
+    && docker-php-ext-install zip pdo pdo_pgsql \
+    && apk del libzip-dev libpq-dev
+
+# Install Composer
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
-
-COPY resources/ resources/
-COPY public/ public/
-COPY vite.config.ts tsconfig.json ./
-COPY .npmrc ./
-
-RUN npm run build
-
-# ============================================================
-# Stage 2 — Install PHP dependencies (no dev)
-# ============================================================
-FROM composer:2.8 AS composer
-
-WORKDIR /app
-
+# Composer dependencies (no-dev, cached layer)
 COPY composer.json composer.lock ./
 RUN composer install \
     --no-dev \
@@ -30,8 +23,16 @@ RUN composer install \
     --ignore-platform-reqs \
     --prefer-dist
 
+# Copy full app and dump optimised autoloader
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
+
+# npm dependencies (cached layer)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Vite build — php is on PATH so Wayfinder plugin works
+RUN npm run build
 
 # ============================================================
 # Stage 3 — Final production image
@@ -50,11 +51,8 @@ RUN apk add --no-cache \
 
 WORKDIR /var/www/html
 
-# Copy app from stage 2
-COPY --from=composer /app .
-
-# Copy built frontend assets from stage 1
-COPY --from=frontend /app/public/build public/build/
+# Copy app + vendor from builder stage (includes public/build from Vite)
+COPY --from=builder /app .
 
 # Nginx and supervisor config
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
